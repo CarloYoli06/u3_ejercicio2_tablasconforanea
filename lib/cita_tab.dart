@@ -1,21 +1,22 @@
-// cita_tab.dart
 import 'package:flutter/material.dart';
 import 'basedatosforaneas.dart';
 import 'persona.dart';
 import 'cita.dart';
 
 class CitaTab extends StatefulWidget {
-  const CitaTab({super.key});
+  final VoidCallback onDataChanged;
+
+  const CitaTab({super.key, required this.onDataChanged});
 
   @override
-  State<CitaTab> createState() => _CitaTabState();
+  CitaTabState createState() => CitaTabState();
 }
 
-class _CitaTabState extends State<CitaTab> {
+
+class CitaTabState extends State<CitaTab> {
   List<Map<String, dynamic>> _citasConNombre = [];
   List<Persona> _personasDisponibles = [];
 
-  // Controladores para el formulario
   final _lugarController = TextEditingController();
   final _fechaController = TextEditingController();
   final _horaController = TextEditingController();
@@ -25,38 +26,35 @@ class _CitaTabState extends State<CitaTab> {
   @override
   void initState() {
     super.initState();
-    _cargarDatos();
+    cargarDatos();
   }
-
-  void _cargarDatos() async {
-    // Cargamos ambos, las citas y las personas (para el dropdown)
+  void cargarDatos() async {
     final citas = await DB.mostrarCitasConNombre();
     final personas = await DB.mostrarPersonas();
-    setState(() {
-      _citasConNombre = citas;
-      _personasDisponibles = personas;
-    });
+    if (mounted) {
+      setState(() {
+        _citasConNombre = citas;
+        _personasDisponibles = personas;
+      });
+    }
   }
 
   void _mostrarFormulario([Map<String, dynamic>? citaMap]) {
-    _personaSeleccionadaId = null; // Resetea la selección
+    _personaSeleccionadaId = null;
 
     if (citaMap != null) {
-      // Editando: cargamos los datos existentes
       _lugarController.text = citaMap['LUGAR'] ?? '';
       _fechaController.text = citaMap['FECHA'] ?? '';
       _horaController.text = citaMap['HORA'] ?? '';
       _anotacionesController.text = citaMap['ANOTACIONES'] ?? '';
       _personaSeleccionadaId = citaMap['IDPERSONA'];
     } else {
-      // Creando: limpiamos los campos
       _lugarController.clear();
       _fechaController.clear();
       _horaController.clear();
       _anotacionesController.clear();
     }
 
-    // Validar que haya personas antes de abrir el formulario
     if (_personasDisponibles.isEmpty && citaMap == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -70,7 +68,6 @@ class _CitaTabState extends State<CitaTab> {
     showDialog(
       context: context,
       builder: (context) {
-        // Usamos StatefulBuilder para que el Dropdown se actualice
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -79,7 +76,6 @@ class _CitaTabState extends State<CitaTab> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // El Dropdown para seleccionar la Persona (Llave Foránea)
                     DropdownButtonFormField<int>(
                       value: _personaSeleccionadaId,
                       hint: const Text('Seleccionar Persona'),
@@ -90,7 +86,7 @@ class _CitaTabState extends State<CitaTab> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setDialogState(() { // Actualiza el estado del diálogo
+                        setDialogState(() {
                           _personaSeleccionadaId = value;
                         });
                       },
@@ -162,7 +158,8 @@ class _CitaTabState extends State<CitaTab> {
     );
     await DB.insertarCita(nuevaCita);
     Navigator.pop(context);
-    _cargarDatos();
+    // 5. Llamar al callback
+    widget.onDataChanged();
   }
 
   void _actualizarCita(int idCita) async {
@@ -176,12 +173,14 @@ class _CitaTabState extends State<CitaTab> {
     );
     await DB.actualizarCita(citaActualizada);
     Navigator.pop(context);
-    _cargarDatos();
+    // 6. Llamar al callback
+    widget.onDataChanged();
   }
 
   void _eliminarCita(int id) async {
     await DB.eliminarCita(id);
-    _cargarDatos();
+    // 7. Llamar al callback
+    widget.onDataChanged();
   }
 
   @override
@@ -191,7 +190,6 @@ class _CitaTabState extends State<CitaTab> {
         itemCount: _citasConNombre.length,
         itemBuilder: (context, index) {
           final cita = _citasConNombre[index];
-          // Usamos los datos del JOIN
           final nombrePersona = cita['NOMBRE'] ?? 'Persona desconocida';
           final lugar = cita['LUGAR'] ?? 'Sin lugar';
           final fechaHora = '${cita['FECHA'] ?? ''} - ${cita['HORA'] ?? ''}';

@@ -4,13 +4,16 @@ import 'basedatosforaneas.dart';
 import 'persona.dart';
 
 class PersonaTab extends StatefulWidget {
-  const PersonaTab({super.key});
+
+  final VoidCallback onDataChanged;
+
+  const PersonaTab({super.key, required this.onDataChanged});
 
   @override
-  State<PersonaTab> createState() => _PersonaTabState();
+  PersonaTabState createState() => PersonaTabState();
 }
 
-class _PersonaTabState extends State<PersonaTab> {
+class PersonaTabState extends State<PersonaTab> {
   List<Persona> _personas = [];
   final _nombreController = TextEditingController();
   final _telefonoController = TextEditingController();
@@ -18,23 +21,23 @@ class _PersonaTabState extends State<PersonaTab> {
   @override
   void initState() {
     super.initState();
-    _cargarPersonas();
+    cargarPersonas();
   }
 
-  void _cargarPersonas() async {
+  void cargarPersonas() async {
     final personas = await DB.mostrarPersonas();
-    setState(() {
-      _personas = personas;
-    });
+    if (mounted) {
+      setState(() {
+        _personas = personas;
+      });
+    }
   }
 
   void _mostrarFormulario([Persona? persona]) {
-    // Si la persona no es nula, estamos editando
     if (persona != null) {
       _nombreController.text = persona.nombre;
       _telefonoController.text = persona.telefono ?? '';
     } else {
-      // Si es nula, estamos creando, limpiamos los campos
       _nombreController.clear();
       _telefonoController.clear();
     }
@@ -87,7 +90,8 @@ class _PersonaTabState extends State<PersonaTab> {
       final nuevaPersona = Persona(nombre: nombre, telefono: telefono);
       await DB.insertarPersona(nuevaPersona);
       Navigator.pop(context); // Cierra el diálogo
-      _cargarPersonas(); // Recarga la lista
+      // 5. Llamar al callback en lugar de a _cargarPersonas()
+      widget.onDataChanged();
     }
   }
 
@@ -96,7 +100,7 @@ class _PersonaTabState extends State<PersonaTab> {
     persona.telefono = _telefonoController.text;
     await DB.actualizarPersona(persona);
     Navigator.pop(context); // Cierra el diálogo
-    _cargarPersonas(); // Recarga la lista
+    widget.onDataChanged();
   }
 
   void _eliminarPersona(int id) async {
@@ -116,7 +120,8 @@ class _PersonaTabState extends State<PersonaTab> {
             onPressed: () async {
               await DB.eliminarPersona(id);
               Navigator.pop(context);
-              _cargarPersonas();
+              // 7. Llamar al callback
+              widget.onDataChanged();
             },
             child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),

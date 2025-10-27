@@ -13,16 +13,16 @@ class DB {
     return openDatabase(
       join(await getDatabasesPath(), 'ejercicio2.db'),
       version: 1,
-      onConfigure: onConfigure, // Añadimos la configuración
+      onConfigure: onConfigure,
       onCreate: (db, version) async {
-        // Corregido: CREATE TABLE en lugar de CREATE TABLA
+
         await db.execute(
             "CREATE TABLE PERSONA(IDPERSONA INTEGER PRIMARY KEY AUTOINCREMENT, NOMBRE TEXT NOT NULL, TELEFONO TEXT)");
 
-        // Corregido: CREATE TABLE
+
         await db.execute(
             "CREATE TABLE CITA(IDCITA INTEGER PRIMARY KEY AUTOINCREMENT, LUGAR TEXT, FECHA TEXT, HORA TEXT, ANOTACIONES TEXT, "
-                "IDPERSONA INTEGER NOT NULL, " // Es buena práctica que la FK no sea nula
+                "IDPERSONA INTEGER NOT NULL, "
                 "FOREIGN KEY(IDPERSONA) REFERENCES PERSONA(IDPERSONA) ON DELETE CASCADE ON UPDATE CASCADE)");
       },
     );
@@ -75,6 +75,22 @@ class DB {
         "INNER JOIN PERSONA P ON C.IDPERSONA = P.IDPERSONA";
     return db.rawQuery(sql);
   }
+
+
+  static Future<List<Map<String, dynamic>>> mostrarCitasHoyYFuturas() async {
+    Database db = await _conectarDB();
+
+    final now = DateTime.now();
+    final formattedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    String sql = "SELECT C.*, P.NOMBRE FROM CITA C "
+        "INNER JOIN PERSONA P ON C.IDPERSONA = P.IDPERSONA "
+        "WHERE C.FECHA >= ? "
+        "ORDER BY C.FECHA ASC, C.HORA ASC";
+
+    return db.rawQuery(sql, [formattedDate]);
+  }
+
   static Future<int> actualizarCita(Cita c) async {
     Database db = await _conectarDB();
     return db.update(
