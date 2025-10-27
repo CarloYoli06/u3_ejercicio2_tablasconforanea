@@ -12,8 +12,8 @@ class CitaTab extends StatefulWidget {
   CitaTabState createState() => CitaTabState();
 }
 
-
 class CitaTabState extends State<CitaTab> {
+  final _formKey = GlobalKey<FormState>();
   List<Map<String, dynamic>> _citasConNombre = [];
   List<Persona> _personasDisponibles = [];
 
@@ -21,13 +21,14 @@ class CitaTabState extends State<CitaTab> {
   final _fechaController = TextEditingController();
   final _horaController = TextEditingController();
   final _anotacionesController = TextEditingController();
-  int? _personaSeleccionadaId; // Para el Dropdown
+  int? _personaSeleccionadaId;
 
   @override
   void initState() {
     super.initState();
     cargarDatos();
   }
+
   void cargarDatos() async {
     final citas = await DB.mostrarCitasConNombre();
     final personas = await DB.mostrarPersonas();
@@ -58,7 +59,8 @@ class CitaTabState extends State<CitaTab> {
     if (_personasDisponibles.isEmpty && citaMap == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error: Debes registrar al menos una persona antes de crear una cita.'),
+          content: Text(
+              'Error: Debes registrar al menos una persona antes de crear una cita.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -73,45 +75,85 @@ class CitaTabState extends State<CitaTab> {
             return AlertDialog(
               title: Text(citaMap == null ? 'Nueva Cita' : 'Editar Cita'),
               content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<int>(
-                      value: _personaSeleccionadaId,
-                      hint: const Text('Seleccionar Persona'),
-                      items: _personasDisponibles.map((persona) {
-                        return DropdownMenuItem<int>(
-                          value: persona.idPersona,
-                          child: Text(persona.nombre),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          _personaSeleccionadaId = value;
-                        });
-                      },
-                      validator: (value) => value == null ? 'Campo requerido' : null,
-                    ),
-                    TextField(
-                      controller: _lugarController,
-                      decoration: const InputDecoration(labelText: 'Lugar'),
-                    ),
-                    TextField(
-                      controller: _fechaController,
-                      decoration: const InputDecoration(labelText: 'Fecha (ej. YYYY-MM-DD)'),
-                      keyboardType: TextInputType.datetime,
-                    ),
-                    TextField(
-                      controller: _horaController,
-                      decoration: const InputDecoration(labelText: 'Hora (ej. HH:MM)'),
-                      keyboardType: TextInputType.datetime,
-                    ),
-                    TextField(
-                      controller: _anotacionesController,
-                      decoration: const InputDecoration(labelText: 'Anotaciones'),
-                      textCapitalization: TextCapitalization.sentences,
-                    ),
-                  ],
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<int>(
+                        value: _personaSeleccionadaId,
+                        hint: const Text('Seleccionar Persona'),
+                        items: _personasDisponibles.map((persona) {
+                          return DropdownMenuItem<int>(
+                            value: persona.idPersona,
+                            child: Text(persona.nombre),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            _personaSeleccionadaId = value;
+                          });
+                        },
+                        validator: (value) =>
+                        value == null ? 'Debe seleccionar una persona' : null,
+                      ),
+                      TextFormField(
+                        controller: _lugarController,
+                        decoration: const InputDecoration(labelText: 'Lugar'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'El lugar es requerido';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: _fechaController,
+                        decoration: const InputDecoration(
+                            labelText: 'Fecha (YYYY-MM-DD)'),
+                        keyboardType: TextInputType.datetime,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'La fecha es requerida';
+                          }
+                          final RegExp dateRegex =
+                          RegExp(r'^\d{4}-\d{2}-\d{2}$');
+                          if (!dateRegex.hasMatch(value)) {
+                            return 'Formato debe ser YYYY-MM-DD';
+                          }
+                          try {
+                            DateTime.parse(value);
+                          } catch (e) {
+                            return 'La fecha no es válida';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: _horaController,
+                        decoration:
+                        const InputDecoration(labelText: 'Hora (HH:MM)'),
+                        keyboardType: TextInputType.datetime,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'La hora es requerida';
+                          }
+                          final RegExp timeRegex =
+                          RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$');
+                          if (!timeRegex.hasMatch(value)) {
+                            return 'Formato debe ser HH:MM (24h)';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextField(
+                        controller: _anotacionesController,
+                        decoration:
+                        const InputDecoration(labelText: 'Anotaciones'),
+                        textCapitalization: TextCapitalization.sentences,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -121,21 +163,12 @@ class CitaTabState extends State<CitaTab> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (_personaSeleccionadaId == null) {
-                      // Mostrar error si no se seleccionó persona
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Debe seleccionar una persona.'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (citaMap == null) {
-                      _insertarCita();
-                    } else {
-                      _actualizarCita(citaMap['IDCITA']);
+                    if (_formKey.currentState!.validate()) {
+                      if (citaMap == null) {
+                        _insertarCita();
+                      } else {
+                        _actualizarCita(citaMap['IDCITA']);
+                      }
                     }
                   },
                   child: const Text('Guardar'),
@@ -151,14 +184,14 @@ class CitaTabState extends State<CitaTab> {
   void _insertarCita() async {
     final nuevaCita = Cita(
       idPersona: _personaSeleccionadaId!,
-      lugar: _lugarController.text,
-      fecha: _fechaController.text,
-      hora: _horaController.text,
-      anotaciones: _anotacionesController.text,
+      lugar: _lugarController.text.trim(),
+      fecha: _fechaController.text.trim(),
+      hora: _horaController.text.trim(),
+      anotaciones: _anotacionesController.text.trim(),
     );
     await DB.insertarCita(nuevaCita);
     Navigator.pop(context);
-    // 5. Llamar al callback
+
     widget.onDataChanged();
   }
 
@@ -166,20 +199,20 @@ class CitaTabState extends State<CitaTab> {
     final citaActualizada = Cita(
       idCita: idCita,
       idPersona: _personaSeleccionadaId!,
-      lugar: _lugarController.text,
-      fecha: _fechaController.text,
-      hora: _horaController.text,
-      anotaciones: _anotacionesController.text,
+      lugar: _lugarController.text.trim(),
+      fecha: _fechaController.text.trim(),
+      hora: _horaController.text.trim(),
+      anotaciones: _anotacionesController.text.trim(),
     );
     await DB.actualizarCita(citaActualizada);
     Navigator.pop(context);
-    // 6. Llamar al callback
+
     widget.onDataChanged();
   }
 
   void _eliminarCita(int id) async {
     await DB.eliminarCita(id);
-    // 7. Llamar al callback
+
     widget.onDataChanged();
   }
 
@@ -196,7 +229,8 @@ class CitaTabState extends State<CitaTab> {
 
           return ListTile(
             title: Text('Cita con: $nombrePersona'),
-            subtitle: Text('$lugar \n$fechaHora \n${cita['ANOTACIONES'] ?? ''}'),
+            subtitle:
+            Text('$lugar \n$fechaHora \n${cita['ANOTACIONES'] ?? ''}'),
             isThreeLine: true,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
