@@ -40,6 +40,30 @@ class CitaTabState extends State<CitaTab> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      final formattedDate = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      _fechaController.text = formattedDate;
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      final formattedTime = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+      _horaController.text = formattedTime;
+    }
+  }
+
   void _mostrarFormulario([Map<String, dynamic>? citaMap]) {
     _personaSeleccionadaId = null;
 
@@ -109,39 +133,30 @@ class CitaTabState extends State<CitaTab> {
                       ),
                       TextFormField(
                         controller: _fechaController,
+                        readOnly: true,
+                        onTap: () => _selectDate(context),
                         decoration: const InputDecoration(
-                            labelText: 'Fecha (YYYY-MM-DD)'),
-                        keyboardType: TextInputType.datetime,
+                          labelText: 'Fecha',
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'La fecha es requerida';
-                          }
-                          final RegExp dateRegex =
-                          RegExp(r'^\d{4}-\d{2}-\d{2}$');
-                          if (!dateRegex.hasMatch(value)) {
-                            return 'Formato debe ser YYYY-MM-DD';
-                          }
-                          try {
-                            DateTime.parse(value);
-                          } catch (e) {
-                            return 'La fecha no es válida';
                           }
                           return null;
                         },
                       ),
                       TextFormField(
                         controller: _horaController,
-                        decoration:
-                        const InputDecoration(labelText: 'Hora (HH:MM)'),
-                        keyboardType: TextInputType.datetime,
+                        readOnly: true,
+                        onTap: () => _selectTime(context),
+                        decoration: const InputDecoration(
+                          labelText: 'Hora',
+                          suffixIcon: Icon(Icons.access_time),
+                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'La hora es requerida';
-                          }
-                          final RegExp timeRegex =
-                          RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$');
-                          if (!timeRegex.hasMatch(value)) {
-                            return 'Formato debe ser HH:MM (24h)';
                           }
                           return null;
                         },
@@ -226,24 +241,42 @@ class CitaTabState extends State<CitaTab> {
           final nombrePersona = cita['NOMBRE'] ?? 'Persona desconocida';
           final lugar = cita['LUGAR'] ?? 'Sin lugar';
           final fechaHora = '${cita['FECHA'] ?? ''} - ${cita['HORA'] ?? ''}';
+          final idCita = cita['IDCITA'];
 
-          return ListTile(
-            title: Text('Cita con: $nombrePersona'),
-            subtitle:
-            Text('$lugar \n$fechaHora \n${cita['ANOTACIONES'] ?? ''}'),
-            isThreeLine: true,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _mostrarFormulario(cita),
+          return Dismissible(
+            key: Key('cita-$idCita'),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              color: Colors.red,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Icon(Icons.delete, color: Colors.white, size: 30),
+            ),
+            confirmDismiss: (direction) async {
+              return await showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Confirmar Eliminación'),
+                  content: const Text('¿Estás seguro de que quieres eliminar esta cita?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _eliminarCita(cita['IDCITA']),
-                ),
-              ],
+              );
+            },
+            onDismissed: (direction) {
+              _eliminarCita(idCita);
+            },
+            child: ListTile(
+              title: Text('Cita con: $nombrePersona'),
+              subtitle:
+              Text('$lugar \n$fechaHora \n${cita['ANOTACIONES'] ?? ''}'),
+              isThreeLine: true,
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue),
+                onPressed: () => _mostrarFormulario(cita),
+              ),
             ),
           );
         },

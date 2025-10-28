@@ -17,11 +17,28 @@ class PersonaTabState extends State<PersonaTab> {
   List<Persona> _personas = [];
   final _nombreController = TextEditingController();
   final _telefonoController = TextEditingController();
+  final _filtroController = TextEditingController(); // NUEVO: Controlador para el filtro
 
   @override
   void initState() {
     super.initState();
     cargarPersonas();
+    _filtroController.addListener(_onFilterChanged); // NUEVO: Escuchador para el filtro
+  }
+
+  @override
+  void dispose() {
+    _filtroController.removeListener(_onFilterChanged);
+    _filtroController.dispose();
+    _nombreController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
+  }
+
+  void _onFilterChanged() {
+    setState(() {
+      // Forzar un redraw para aplicar el filtro
+    });
   }
 
   void cargarPersonas() async {
@@ -89,8 +106,7 @@ class PersonaTabState extends State<PersonaTab> {
     if (nombre.isNotEmpty) {
       final nuevaPersona = Persona(nombre: nombre, telefono: telefono);
       await DB.insertarPersona(nuevaPersona);
-      Navigator.pop(context); // Cierra el diálogo
-      // 5. Llamar al callback en lugar de a _cargarPersonas()
+      Navigator.pop(context);
       widget.onDataChanged();
     }
   }
@@ -99,12 +115,11 @@ class PersonaTabState extends State<PersonaTab> {
     persona.nombre = _nombreController.text;
     persona.telefono = _telefonoController.text;
     await DB.actualizarPersona(persona);
-    Navigator.pop(context); // Cierra el diálogo
+    Navigator.pop(context);
     widget.onDataChanged();
   }
 
   void _eliminarPersona(int id) async {
-    // Pedir confirmación
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -120,7 +135,6 @@ class PersonaTabState extends State<PersonaTab> {
             onPressed: () async {
               await DB.eliminarPersona(id);
               Navigator.pop(context);
-              // 7. Llamar al callback
               widget.onDataChanged();
             },
             child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
@@ -132,31 +146,80 @@ class PersonaTabState extends State<PersonaTab> {
 
   @override
   Widget build(BuildContext context) {
+    final filtro = _filtroController.text.toLowerCase();
+    final personasFiltradas = _personas.where((p) {
+      return p.nombre.toLowerCase().contains(filtro);
+    }).toList();
+
     return Scaffold(
-      body: ListView.builder(
-        itemCount: _personas.length,
-        itemBuilder: (context, index) {
-          final persona = _personas[index];
-          return ListTile(
-            title: Text(persona.nombre),
-            subtitle: Text(persona.telefono ?? 'Sin teléfono'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Botón de Editar
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _mostrarFormulario(persona),
-                ),
-                // Botón de Eliminar
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _eliminarPersona(persona.idPersona!),
-                ),
-              ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _filtroController,
+              decoration: const InputDecoration(
+                labelText: 'Buscar Persona',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: personasFiltradas.length,
+              itemBuilder: (context, index) {
+                final persona = personasFiltradas[index];
+                return Dismissible(
+                  key: Key('persona-${persona.idPersona}'),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white, size: 30),
+                  ),
+                  confirmDismiss: (direction) async {
+                    // Muestra el diálogo de confirmación ya existente
+                    bool confirm = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirmar eliminación'),
+                        content: const Text(
+                            '¿Seguro que quieres eliminar esta persona? Todas sus citas asociadas también se borrarán.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      _eliminarPersona(persona.idPersona!); // La lógica de eliminar está en _eliminarPersona
+                    }
+                    return false; // Retornamos false para manejar la eliminación explícitamente y no con onDismissed
+                  },
+                  onDismissed: (direction) {
+                    // No hace falta lógica aquí ya que se maneja en confirmDismiss
+                  },
+                  child: ListTile(
+                    title: Text(persona.nombre),
+                    subtitle: Text(persona.telefono ?? 'Sin teléfono'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _mostrarFormulario(persona),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _mostrarFormulario(),

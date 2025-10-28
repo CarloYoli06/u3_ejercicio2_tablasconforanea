@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
             tabs: [
               Tab(text: 'Personas', icon: Icon(Icons.person)),
               Tab(text: 'Citas', icon: Icon(Icons.calendar_month)),
-              Tab(text: 'Hoy', icon: Icon(Icons.today)), // <--- NUEVO
+              Tab(text: 'Proximas', icon: Icon(Icons.today)), // <--- NUEVO
             ],
           ),
         ),

@@ -53,7 +53,8 @@ class HoyTabState extends State<HoyTab> {
       );
     }
 
-    // 6. Mostramos la lista de citas
+    final todayDate = "${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}";
+
     return Scaffold(
       body: ListView.builder(
         itemCount: _citasHoyYFuturas.length,
@@ -65,19 +66,27 @@ class HoyTabState extends State<HoyTab> {
           final hora = cita['HORA'] ?? 'Sin hora';
           final anotaciones = cita['ANOTACIONES'] ?? '';
 
+          final isToday = fecha == todayDate;
+
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             elevation: 3,
+            color: isToday ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: isToday ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                child: const Icon(Icons.calendar_month),
+                child: Icon(isToday ? Icons.warning_amber : Icons.calendar_month),
               ),
-              title: Text('$fecha - $hora', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                '$fecha - $hora',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isToday ? Theme.of(context).colorScheme.error : null,
+                ),
+              ),
               subtitle: Text('Con: $nombrePersona \nLugar: $lugar \nNotas: $anotaciones'),
               isThreeLine: true,
-
             ),
           );
         },
