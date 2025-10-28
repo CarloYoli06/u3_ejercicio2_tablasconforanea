@@ -54,9 +54,9 @@ La lógica principal de la aplicación se encuentra en la carpeta `lib`.
 ## ✨ Funcionalidades Destacadas (Imágenes)
 
 Aquí se muestran algunas de las interacciones clave de la aplicación:
-![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Eliminar.png))
-![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Citasvista.png))
-![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Personas.png))
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Eliminar.png)
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Citasvista.png)
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Personas.png)
 
 ### Personas (Formulario y Eliminación)
 
