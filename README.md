@@ -51,12 +51,7 @@ La lógica principal de la aplicación se encuentra en la carpeta `lib`.
 | `cita_tab.dart` | Interfaz de usuario y lógica para la gestión de Citas (Lista, Formulario CRUD con `DropdownButton` para Persona y **Date/Time Pickers**). |
 | `hoy_tab.dart` | Interfaz de usuario y lógica para listar las citas de **Hoy y Futuras**, ordenadas por fecha y hora, resaltando las de hoy. |
 
-## ✨ Funcionalidades Destacadas (Imágenes)
 
-Aquí se muestran algunas de las interacciones clave de la aplicación:
-![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Eliminar.png)
-![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Citasvista.png)
-![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Personas.png)
 
 ### Personas (Formulario y Eliminación)
 
@@ -80,3 +75,12 @@ Este proyecto utiliza las siguientes dependencias clave para su funcionalidad:
 
 * `sqflite`: Para la gestión de la base de datos local SQLite.
 * `path`: Para construir rutas de archivos compatibles con el sistema.
+
+
+## ✨ Funcionalidades Destacadas (Imágenes)
+
+Aquí se muestran algunas de las interacciones clave de la aplicación:
+
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Eliminar.png)
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Citasvista.png)
+![](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Personas.png)
