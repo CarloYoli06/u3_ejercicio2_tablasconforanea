@@ -4,9 +4,9 @@ Este proyecto es una aplicación móvil desarrollada con **Flutter** que utiliza
 
 La aplicación está estructurada con pestañas (Tabs) que permiten navegar entre las siguientes funcionalidades:
 
-1.  **Personas:** Gestionar la lista de personas (Crear, Leer, Actualizar, Eliminar).
-2.  **Citas:** Gestionar las citas, asociándolas a una persona existente mediante una clave foránea.
-3.  **Calendario:** Visualizar un calendario interactivo donde se resaltan los días con citas programadas y se listan las citas del día seleccionado.
+1.  **Personas:** Gestionar la lista de personas (Crear, Leer, Actualizar, Eliminar). Incluye **Búsqueda por nombre** y **Eliminación por deslizamiento (Dismissible)**.
+2.  **Citas:** Gestionar las citas (CRUD), asociándolas a una persona existente. Incluye **Selectores de Fecha/Hora** para ingreso de datos preciso y **Eliminación por deslizamiento (Dismissible)**.
+3.  **Próximas:** Visualizar una lista ordenada de **citas de hoy y futuras**. Resalta visualmente las citas programadas para el día actual.
 
 ## 🛠️ Requisitos
 
@@ -20,12 +20,12 @@ Sigue estos pasos para poner en marcha el proyecto:
 
 1.  **Clonar el repositorio o descargar los archivos:**
     ```bash
-    git clone https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea
+    git clone [https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea)
     cd u3_ejercicio2_tablasconforanea
     ```
 
 2.  **Obtener las dependencias:**
-    Ejecuta el siguiente comando en la terminal desde la raíz del proyecto para descargar todos los paquetes necesarios (incluyendo `sqflite` y `table_calendar`):
+    Ejecuta el siguiente comando en la terminal desde la raíz del proyecto para descargar todos los paquetes necesarios (`sqflite` y `path`):
     ```bash
     flutter pub get
     ```
@@ -40,18 +40,39 @@ Sigue estos pasos para poner en marcha el proyecto:
 
 La lógica principal de la aplicación se encuentra en la carpeta `lib`.
 
-[**Enlace a la carpeta `lib` (Google Drive)**](https://drive.google.com/drive/folders/1kgqzTBOG2GwehiNNYrB2JLn1eDByi78C?usp=drive_link)
-
 | Archivo | Descripción |
 | :--- | :--- |
 | `main.dart` | Punto de entrada de la aplicación. |
-| `home_page.dart` | Contiene el `DefaultTabController` y gestiona las pestañas principales. |
-| `persona.dart` | Modelo de datos para la entidad Persona. |
-| `cita.dart` | Modelo de datos para la entidad Cita. |
-| `basedatosforaneas.dart` | Clase `DB` con métodos para la conexión y operaciones CRUD en SQLite para `PERSONA` y `CITA` (incluye joins y consultas específicas para el calendario). |
-| `persona_tab.dart` | Interfaz de usuario y lógica para la gestión de Personas. |
-| `cita_tab.dart` | Interfaz de usuario y lógica para la gestión de Citas. |
-| `calendario_tab.dart` | Interfaz de usuario y lógica para la visualización de citas en un calendario. **(Requiere `table_calendar`)** |
+| `home_page.dart` | Contiene el `DefaultTabController` y gestiona las tres pestañas principales (`Personas`, `Citas`, `Proximas`). |
+| `persona.dart` | Modelo de datos (`class Persona`) y lógica de serialización para la entidad Persona. |
+| `cita.dart` | Modelo de datos (`class Cita`) y lógica de serialización para la entidad Cita. |
+| `basedatosforaneas.dart` | Clase `DB` para la conexión y operaciones **CRUD** en SQLite (`sqflite`). Contiene la lógica para tablas `PERSONA` y `CITA` con la relación de clave foránea (`ON DELETE CASCADE`). |
+| `persona_tab.dart` | Interfaz de usuario y lógica para la gestión de Personas (Lista, Formulario CRUD, Búsqueda, Dismissible). |
+| `cita_tab.dart` | Interfaz de usuario y lógica para la gestión de Citas (Lista, Formulario CRUD con `DropdownButton` para Persona y **Date/Time Pickers**). |
+| `hoy_tab.dart` | Interfaz de usuario y lógica para listar las citas de **Hoy y Futuras**, ordenadas por fecha y hora, resaltando las de hoy. |
+
+## ✨ Funcionalidades Destacadas (Imágenes)
+
+Aquí se muestran algunas de las interacciones clave de la aplicación:
+![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Eliminar.png))
+![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Citasvista.png))
+![]([ruta/a/la/imagen.extensión](https://github.com/CarloYoli06/u3_ejercicio2_tablasconforanea/blob/main/Personas.png))
+
+### Personas (Formulario y Eliminación)
+
+Permite registrar nuevas personas y editarlas. La eliminación es segura gracias a un diálogo de confirmación, incluso al deslizar.
+
+| Registro de Persona | Confirmación de Eliminación |
+| :---: | :---: |
+|  |  |
+
+### Próximas Citas (Hoy y Futuro)
+
+Muestra una vista limpia de las citas futuras. Las citas de hoy se resaltan con un icono de advertencia y un color de fondo diferente para mayor visibilidad.
+
+| Vista de Próximas Citas |
+| :---: |
+|  |
 
 ## 🔗 Dependencias Clave
 
@@ -59,4 +80,3 @@ Este proyecto utiliza las siguientes dependencias clave para su funcionalidad:
 
 * `sqflite`: Para la gestión de la base de datos local SQLite.
 * `path`: Para construir rutas de archivos compatibles con el sistema.
-* `table_calendar`: Para la implementación del widget de calendario en la pestaña "Calendario".
